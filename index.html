@@ -398,6 +398,7 @@
     let appConfig = {
       businessName: '予約受付',
       liffId: '2010649152-2G8GhJhh',
+      gasApiUrl: 'https://script.google.com/macros/s/AKfycybP6WSFtomhFsQ_OUPBXB1eKrawy8xJJVZnu2VIsIP6chmf37XUNa4BJ6iWnznGhQ0c/exec',
       menuOptions: [
         { id: 'brow', label: '眉' },
         { id: 'lip', label: 'リップ' },
@@ -434,15 +435,57 @@
     const photoInput = document.querySelector('#photoInput');
     const debugOutput = document.querySelector('#debugOutput');
 
-    function apiCall(name, payload) {
-      if (!window.google || !google.script || !google.script.run) {
+    async function apiCall(name, payload) {
+      if (!appConfig.gasApiUrl || location.protocol === 'file:') {
         return previewApi(name);
       }
 
+      try {
+        const response = await fetch(appConfig.gasApiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8'
+          },
+          body: JSON.stringify({
+            action: name,
+            payload: payload || {}
+          })
+        });
+
+        if (!response.ok) throw new Error(`GAS API HTTP ${response.status}`);
+        return await response.json();
+      } catch (error) {
+        if (name !== 'submitReservation') {
+          return jsonpApiCall(name, payload);
+        }
+        throw error;
+      }
+    }
+
+    function jsonpApiCall(name, payload) {
       return new Promise((resolve, reject) => {
-        google.script.run
-          .withSuccessHandler(resolve)
-          .withFailureHandler(reject)[name](payload || {});
+        const callbackName = `reservationApi_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        const script = document.createElement('script');
+        const params = new URLSearchParams({
+          action: name,
+          payload: JSON.stringify(payload || {}),
+          callback: callbackName
+        });
+
+        window[callbackName] = (result) => {
+          delete window[callbackName];
+          script.remove();
+          resolve(result);
+        };
+
+        script.onerror = () => {
+          delete window[callbackName];
+          script.remove();
+          reject(new Error('GAS APIに接続できませんでした'));
+        };
+
+        script.src = `${appConfig.gasApiUrl}?${params.toString()}`;
+        document.head.appendChild(script);
       });
     }
 
