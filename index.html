@@ -1,0 +1,913 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>予約フォーム</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #17211d;
+      background: #f5f7f4;
+      -webkit-text-size-adjust: 125%;
+      text-size-adjust: 125%;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-size: 24px;
+      background: linear-gradient(140deg, #eef5f2, #f8f2e7 48%, #eef3f7);
+    }
+
+    main {
+      width: 100%;
+      max-width: 100vw;
+      margin: 0;
+      padding: 20px 10px 36px;
+      overflow-x: hidden;
+    }
+
+    header {
+      width: 100%;
+      max-width: 100vw;
+      margin: 0 auto 14px;
+      padding: 0 18px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 38px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 34px;
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: #56645f;
+      line-height: 1.7;
+      font-size: 24px;
+    }
+
+    form {
+      width: 100%;
+      max-width: 100vw;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+      overflow-x: hidden;
+    }
+
+    section {
+      width: 100%;
+      min-width: 0;
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border: 1px solid #d7dfda;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: 0 14px 38px rgba(29, 49, 41, 0.1);
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      font-size: 26px;
+      font-weight: 700;
+    }
+
+    input,
+    button {
+      width: 100%;
+      min-width: 0;
+      border-radius: 8px;
+      font: inherit;
+    }
+
+    input {
+      min-height: 64px;
+      border: 1px solid #c8d3cd;
+      padding: 15px 14px;
+      background: #fff;
+      color: #17211d;
+      font-size: 26px;
+    }
+
+    input[type="date"] {
+      display: block;
+      appearance: auto;
+      -webkit-appearance: auto;
+      text-align: left;
+    }
+
+    button {
+      min-height: 64px;
+      border: 0;
+      background: #13795b;
+      color: #fff;
+      font-size: 26px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      border: 1px solid #13795b;
+      background: #fff;
+      color: #13795b;
+    }
+
+    button:disabled {
+      border-color: #9cadac;
+      background: #9cadac;
+      color: #fff;
+      cursor: progress;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .choices {
+      display: grid;
+      gap: 10px;
+    }
+
+    .choice {
+      position: relative;
+      display: grid;
+      gap: 8px;
+      min-height: 104px;
+      padding: 20px 18px 20px 60px;
+      border: 1px solid #c9d5cf;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .choice input {
+      position: absolute;
+      top: 27px;
+      left: 18px;
+      width: 30px;
+      height: 30px;
+      min-height: 30px;
+      padding: 0;
+      accent-color: #13795b;
+    }
+
+    .choice:has(input:checked) {
+      border-color: #13795b;
+      background: #edf7f3;
+      box-shadow: inset 0 0 0 1px #13795b;
+    }
+
+    .muted,
+    .choice span {
+      color: #5a6862;
+      font-size: 23px;
+      line-height: 1.5;
+    }
+
+    .choice strong {
+      font-size: 28px;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .date-grid,
+    .time-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .pill {
+      min-height: 72px;
+      border: 1px solid #c9d5cf;
+      background: #fff;
+      color: #17211d;
+      font-size: 25px;
+      font-weight: 700;
+    }
+
+    .pill.active {
+      border-color: #13795b;
+      background: #13795b;
+      color: #fff;
+    }
+
+    .summary,
+    .empty {
+      min-width: 0;
+      padding: 14px;
+      border-radius: 8px;
+      line-height: 1.65;
+      font-size: 26px;
+    }
+
+    .summary {
+      display: grid;
+      gap: 6px;
+      background: #f1f6f4;
+      color: #30443b;
+    }
+
+    .empty {
+      border: 1px dashed #b7c5bf;
+      background: #fbfcfb;
+      color: #5a6862;
+    }
+
+    .status {
+      min-height: 24px;
+      color: #275244;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .error {
+      color: #b42318;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .debug {
+      color: #5a6862;
+      font-size: 20px;
+      line-height: 1.5;
+    }
+
+    .debug summary {
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .debug pre {
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin: 8px 0 0;
+      padding: 10px;
+      border-radius: 8px;
+      background: #f7faf8;
+    }
+
+    @media (max-width: 960px) {
+      main {
+        padding: 14px 0 34px;
+      }
+
+      header {
+        padding: 0 18px;
+      }
+
+      form {
+        gap: 12px;
+      }
+
+      section {
+        border-left: 0;
+        border-right: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      .row,
+      .button-grid,
+      .date-grid,
+      .time-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 620px) {
+      h1 {
+        font-size: 38px;
+      }
+
+      section {
+        padding: 22px 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1 id="title">予約フォーム</h1>
+      <p>LINEで行っていた予約の流れを、フォーム上で進めます。</p>
+    </header>
+
+    <form id="reservationForm">
+      <section id="profileSection">
+        <h2>1. お客様情報</h2>
+        <div id="knownUser" class="summary hidden"></div>
+        <div id="profileInputs" class="row">
+          <label>
+            お名前
+            <input name="name" autocomplete="name">
+          </label>
+          <label>
+            生年月日
+            <input name="birth" type="date">
+          </label>
+        </div>
+      </section>
+
+      <section id="photoSection">
+        <h2>2. 写真添付</h2>
+        <p class="muted">予約希望部位の写真を添付してください。初回の方もこちらから添付できます。</p>
+        <label>
+          写真
+          <input id="photoInput" type="file" accept="image/*">
+        </label>
+      </section>
+
+      <section>
+        <h2>3. メニュー選択</h2>
+        <div id="menuList" class="choices"></div>
+        <div id="durationBox" class="summary">メニューを選ぶと施術時間を計算します。</div>
+      </section>
+
+      <section>
+        <h2>4. 予約可能月を選択</h2>
+        <button id="loadMonthsButton" class="secondary" type="button">予約可能月を表示</button>
+        <div id="monthList" class="button-grid"></div>
+      </section>
+
+      <section>
+        <h2>5. 予約可能日を選択</h2>
+        <div id="dateList" class="date-grid">
+          <div class="empty">予約可能月を選ぶと日付が表示されます。</div>
+        </div>
+      </section>
+
+      <section>
+        <h2>6. 時間確認</h2>
+        <div id="timeProposal" class="summary">日付を選ぶと、こちらから最初の候補時間を提示します。</div>
+        <div class="button-grid">
+          <button id="acceptProposalButton" type="button" disabled>この時間で進む</button>
+          <button id="showOtherTimesButton" class="secondary" type="button" disabled>別時間を選択</button>
+        </div>
+        <div id="timeList" class="time-grid hidden"></div>
+      </section>
+
+      <section>
+        <h2>7. 予約確定</h2>
+        <details class="debug" open>
+          <summary>LIFF診断</summary>
+          <pre id="debugOutput">確認中...</pre>
+        </details>
+        <div id="summary" class="summary">必要項目を選ぶと確認内容が表示されます。</div>
+        <button type="submit">この内容で予約を確定する</button>
+        <div id="status" class="status" aria-live="polite"></div>
+      </section>
+    </form>
+  </main>
+
+  <script>
+    let appConfig = {
+      businessName: '予約受付',
+      liffId: '2010649152-2G8GhJhh',
+      menuOptions: [
+        { id: 'brow', label: '眉' },
+        { id: 'lip', label: 'リップ' },
+        { id: 'eyeline', label: 'アイライン' }
+      ]
+    };
+
+    const state = {
+      lineUserId: '',
+      displayName: '',
+      knownUser: null,
+      customerType: '初回',
+      selectedMonth: '',
+      selectedDate: '',
+      selectedSlot: null,
+      slots: []
+    };
+
+    const form = document.querySelector('#reservationForm');
+    const knownUser = document.querySelector('#knownUser');
+    const profileInputs = document.querySelector('#profileInputs');
+    const menuList = document.querySelector('#menuList');
+    const durationBox = document.querySelector('#durationBox');
+    const monthList = document.querySelector('#monthList');
+    const dateList = document.querySelector('#dateList');
+    const timeProposal = document.querySelector('#timeProposal');
+    const timeList = document.querySelector('#timeList');
+    const acceptProposalButton = document.querySelector('#acceptProposalButton');
+    const showOtherTimesButton = document.querySelector('#showOtherTimesButton');
+    const loadMonthsButton = document.querySelector('#loadMonthsButton');
+    const summary = document.querySelector('#summary');
+    const statusEl = document.querySelector('#status');
+    const submitButton = form.querySelector('button[type="submit"]');
+    const photoInput = document.querySelector('#photoInput');
+    const debugOutput = document.querySelector('#debugOutput');
+
+    function apiCall(name, payload) {
+      if (!window.google || !google.script || !google.script.run) {
+        return previewApi(name);
+      }
+
+      return new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)[name](payload || {});
+      });
+    }
+
+    function previewApi(name) {
+      const preview = {
+        getClientConfig: { ...appConfig },
+        getInitialState: { ok: true, user: null, canSkipProfile: false, customerType: '初回', flowHint: 'first' },
+        getReservableMonths: { ok: true, months: ['2026-07', '2026-08'] },
+        getReservableDates: {
+          ok: true,
+          dates: [
+            { value: '2026-07-20', label: '2026年7月20日(月)' },
+            { value: '2026-07-21', label: '2026年7月21日(火)' },
+            { value: '2026-07-22', label: '2026年7月22日(水)' }
+          ]
+        },
+        getFreeTimeProposal: {
+          ok: true,
+          proposal: { startTime: '10:00', endTime: '12:30', label: '2026年7月20日(月) 10:00-12:30' },
+          slots: [
+            { startTime: '10:00', endTime: '12:30', label: '2026年7月20日(月) 10:00-12:30' },
+            { startTime: '14:00', endTime: '16:30', label: '2026年7月20日(月) 14:00-16:30' }
+          ]
+        },
+        submitReservation: { ok: true, preview: true }
+      };
+      return Promise.resolve(preview[name]);
+    }
+
+    async function setupLineProfile() {
+      const debug = {
+        liffId: appConfig.liffId,
+        hasLiffSdk: Boolean(window.liff),
+        isInClient: null,
+        isLoggedIn: null,
+        userId: '',
+        displayName: '',
+        url: location.href,
+        referrer: document.referrer || '',
+        userAgent: navigator.userAgent,
+        phase: 'created',
+        error: ''
+      };
+      const initTimeout = window.setTimeout(() => {
+        updateDebug({
+          ...debug,
+          phase: 'waiting for liff.init',
+          error: 'LIFF初期化が5秒以上完了していません。LIFF ID、Endpoint URL、リッチメニューURLを確認してください。'
+        });
+      }, 5000);
+
+      try {
+        if (!window.liff || !appConfig.liffId) {
+          debug.error = 'LIFF SDKまたはLIFF IDがありません';
+          updateDebug(debug);
+          return;
+        }
+
+        debug.phase = 'before liff.init';
+        updateDebug(debug);
+
+        await Promise.race([
+          liff.init({ liffId: appConfig.liffId }),
+          new Promise((_, reject) => {
+            window.setTimeout(() => reject(new Error('liff.init timeout')), 8000);
+          })
+        ]);
+
+        debug.isInClient = liff.isInClient();
+        debug.isLoggedIn = liff.isLoggedIn();
+        debug.phase = 'after liff.init';
+
+        if (!liff.isLoggedIn()) {
+          updateDebug(debug);
+          liff.login();
+          return;
+        }
+        const profile = await liff.getProfile();
+        state.lineUserId = profile.userId;
+        state.displayName = profile.displayName;
+        debug.userId = profile.userId || '';
+        debug.displayName = profile.displayName || '';
+
+        if (!state.lineUserId && liff.getDecodedIDToken) {
+          const decoded = liff.getDecodedIDToken();
+          if (decoded && decoded.sub) {
+            state.lineUserId = decoded.sub;
+            debug.userId = decoded.sub;
+          }
+        }
+      } catch (error) {
+        console.warn('LIFF profile unavailable', error);
+        debug.phase = 'liff error';
+        debug.error = error.message || String(error);
+        setError('LINE IDを取得できませんでした。リッチメニューのLIFF URLから開き直してください。');
+      } finally {
+        window.clearTimeout(initTimeout);
+        updateDebug(debug);
+      }
+    }
+
+    function updateDebug(debug) {
+      debugOutput.textContent = JSON.stringify(debug, null, 2);
+    }
+
+    function renderMenus() {
+      menuList.innerHTML = appConfig.menuOptions.map((menu) => `
+        <label class="choice">
+          <input type="checkbox" name="menuIds" value="${menu.id}">
+          <strong>${menu.label}</strong>
+          <span>複数選択できます。</span>
+        </label>
+      `).join('');
+    }
+
+    function applyInitialState(initialState) {
+      state.customerType = initialState.customerType || (initialState.user ? 'リピーター' : '初回');
+
+      if (!initialState.user) {
+        knownUser.classList.add('hidden');
+        profileInputs.classList.remove('hidden');
+        updateDuration();
+        return;
+      }
+
+      state.knownUser = initialState.user;
+      knownUser.classList.remove('hidden');
+      profileInputs.classList.add('hidden');
+      knownUser.innerHTML = `
+        <strong>${initialState.user.name} 様</strong>
+        <span>生年月日: ${initialState.user.birth}</span>
+      `;
+
+      form.elements.name.value = initialState.user.name;
+      form.elements.birth.value = initialState.user.birth;
+      updateDuration();
+    }
+
+    function getMenuIds() {
+      return Array.from(form.querySelectorAll('input[name="menuIds"]:checked')).map((input) => input.value);
+    }
+
+    function getMenuLabel() {
+      const ids = getMenuIds();
+      return appConfig.menuOptions
+        .filter((menu) => ids.includes(menu.id))
+        .map((menu) => menu.label)
+        .join('、');
+    }
+
+    function calculateDuration(customerType, ids) {
+      const hasBrow = ids.includes('brow');
+      const hasLip = ids.includes('lip');
+      const hasEyeline = ids.includes('eyeline');
+      const count = ids.length;
+
+      if (customerType === 'リピーター') {
+        if (count === 1 && hasBrow) return 120;
+        if (count === 1 && hasLip) return 120;
+        if (count === 1 && hasEyeline) return 60;
+        if (hasBrow && hasLip && hasEyeline) return 240;
+        if (hasBrow && hasLip) return 240;
+        if (hasBrow && hasEyeline) return 210;
+        if (hasLip && hasEyeline) return 210;
+        return 120;
+      }
+
+      if (count === 1 && hasBrow) return 150;
+      if (count === 1 && hasLip) return 150;
+      if (count === 1 && hasEyeline) return 60;
+      if (hasBrow && hasLip && hasEyeline) return 300;
+      if (hasBrow && hasLip) return 270;
+      if (hasBrow && hasEyeline) return 240;
+      if (hasLip && hasEyeline) return 240;
+      return 0;
+    }
+
+    function getDuration() {
+      return calculateDuration(state.customerType, getMenuIds());
+    }
+
+    function updateDuration() {
+      const ids = getMenuIds();
+      const duration = getDuration();
+
+      if (!state.customerType || !ids.length || !duration) {
+        durationBox.textContent = 'メニューを選ぶと施術時間を計算します。';
+      } else {
+        durationBox.innerHTML = `
+          <strong>${getMenuLabel()}</strong>
+          <span>区分: ${state.customerType}</span>
+          <span>施術時間: ${duration}分</span>
+        `;
+      }
+
+      resetCalendarSelection();
+      updateSummary();
+    }
+
+    function resetCalendarSelection() {
+      state.selectedMonth = '';
+      state.selectedDate = '';
+      state.selectedSlot = null;
+      state.slots = [];
+      monthList.innerHTML = '';
+      dateList.innerHTML = '<div class="empty">予約可能月を選ぶと日付が表示されます。</div>';
+      timeProposal.textContent = '日付を選ぶと、こちらから最初の候補時間を提示します。';
+      timeList.classList.add('hidden');
+      timeList.innerHTML = '';
+      acceptProposalButton.disabled = true;
+      showOtherTimesButton.disabled = true;
+    }
+
+    async function loadMonths() {
+      const duration = getDuration();
+      const menuIds = getMenuIds();
+      const customerType = state.customerType;
+
+      if (!duration) {
+        setError('メニューを選択してください。');
+        return;
+      }
+
+      clearStatus();
+      loadMonthsButton.disabled = true;
+      monthList.innerHTML = '<div class="empty">予約可能月を確認しています...</div>';
+
+      const result = await apiCall('getReservableMonths', { duration, menuIds, customerType });
+      loadMonthsButton.disabled = false;
+
+      if (!result.ok || !result.months.length) {
+        monthList.innerHTML = '<div class="empty">予約可能月が見つかりませんでした。</div>';
+        return;
+      }
+
+      monthList.innerHTML = result.months.map((month) => `<button class="pill" type="button" data-month="${month}">${month.replace('-', '年')}月</button>`).join('');
+    }
+
+    async function selectMonth(month, button) {
+      state.selectedMonth = month;
+      state.selectedDate = '';
+      state.selectedSlot = null;
+      Array.from(monthList.querySelectorAll('button')).forEach((item) => item.classList.remove('active'));
+      button.classList.add('active');
+
+      const [year, monthNumber] = month.split('-').map(Number);
+      dateList.innerHTML = '<div class="empty">予約可能日を確認しています...</div>';
+
+      const result = await apiCall('getReservableDates', {
+        year,
+        month: monthNumber,
+        duration: getDuration(),
+        menuIds: getMenuIds(),
+        customerType: state.customerType
+      });
+
+      if (!result.ok || !result.dates.length) {
+        dateList.innerHTML = '<div class="empty">この月に予約可能日はありません。</div>';
+        return;
+      }
+
+      dateList.innerHTML = result.dates.map((date) => `<button class="pill" type="button" data-date="${date.value}">${date.label}</button>`).join('');
+      updateSummary();
+    }
+
+    async function selectDate(date, button) {
+      state.selectedDate = date;
+      state.selectedSlot = null;
+      Array.from(dateList.querySelectorAll('button')).forEach((item) => item.classList.remove('active'));
+      button.classList.add('active');
+
+      timeProposal.textContent = '空き時間を確認しています...';
+      timeList.classList.add('hidden');
+      timeList.innerHTML = '';
+      acceptProposalButton.disabled = true;
+      showOtherTimesButton.disabled = true;
+
+      const result = await apiCall('getFreeTimeProposal', {
+        date,
+        duration: getDuration(),
+        menuIds: getMenuIds(),
+        customerType: state.customerType
+      });
+
+      if (!result.ok) {
+        timeProposal.textContent = result.error || '空き時間がありません。別の日を選択してください。';
+        return;
+      }
+
+      state.slots = result.slots;
+      state.selectedSlot = result.proposal;
+      timeProposal.innerHTML = `
+        <strong>こちらでよろしいですか？</strong>
+        <span>${result.proposal.label}</span>
+      `;
+      acceptProposalButton.disabled = false;
+      showOtherTimesButton.disabled = false;
+      renderTimeList();
+      updateSummary();
+    }
+
+    function renderTimeList() {
+      timeList.innerHTML = state.slots.map((slot) => `
+        <button class="pill${state.selectedSlot && state.selectedSlot.startTime === slot.startTime ? ' active' : ''}" type="button" data-time="${slot.startTime}">
+          ${slot.startTime}-${slot.endTime}
+        </button>
+      `).join('');
+    }
+
+    function chooseSlot(startTime, button) {
+      state.selectedSlot = state.slots.find((slot) => slot.startTime === startTime);
+      Array.from(timeList.querySelectorAll('button')).forEach((item) => item.classList.remove('active'));
+      button.classList.add('active');
+      timeProposal.innerHTML = `
+        <strong>選択中の時間</strong>
+        <span>${state.selectedSlot.label}</span>
+      `;
+      updateSummary();
+    }
+
+    function updateSummary() {
+      const duration = getDuration();
+      const menuLabel = getMenuLabel();
+      const name = form.elements.name.value;
+      const birth = form.elements.birth.value;
+      const customerType = state.customerType;
+
+      if (!name || !birth || !customerType || !menuLabel || !duration || !state.selectedDate || !state.selectedSlot) {
+        summary.textContent = '必要項目を選ぶと確認内容が表示されます。';
+        return;
+      }
+
+      summary.innerHTML = `
+        <strong>${name} 様</strong>
+        <span>生年月日: ${birth}</span>
+        <span>区分: ${customerType}</span>
+        <span>メニュー: ${menuLabel}</span>
+        <span>施術時間: ${duration}分</span>
+        <span>予約日時: ${state.selectedDate} ${state.selectedSlot.startTime}-${state.selectedSlot.endTime}</span>
+      `;
+    }
+
+    function setError(message) {
+      statusEl.className = 'status error';
+      statusEl.textContent = message;
+    }
+
+    function clearStatus() {
+      statusEl.className = 'status';
+      statusEl.textContent = '';
+    }
+
+    function fileToBase64(file) {
+      if (!file) return Promise.resolve({ photoBase64: '', photoMimeType: '' });
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result || '';
+          resolve({
+            photoBase64: String(result).split(',')[1] || '',
+            photoMimeType: file.type || 'image/jpeg'
+          });
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function submitReservation(event) {
+      event.preventDefault();
+
+      const name = form.elements.name.value.trim();
+      const birth = form.elements.birth.value.trim();
+      const customerType = state.customerType;
+      const menuIds = getMenuIds();
+      const duration = getDuration();
+
+      if (!state.lineUserId) {
+        setError('LINE IDを取得できていないため予約を保存できません。リッチメニューのLIFF URLから開き直してください。');
+        return;
+      }
+
+      if (!name || !birth || !customerType || !menuIds.length || !duration || !state.selectedDate || !state.selectedSlot) {
+        setError('お客様情報、メニュー、日付、時間をすべて選択してください。');
+        return;
+      }
+
+      submitButton.disabled = true;
+      clearStatus();
+      statusEl.textContent = '予約を確定しています...';
+
+      try {
+        const photo = await fileToBase64(photoInput.files[0]);
+        const result = await apiCall('submitReservation', {
+          lineUserId: state.lineUserId,
+          displayName: state.displayName,
+          name,
+          birth,
+          customerType,
+          menuIds,
+          menuLabel: getMenuLabel(),
+          duration,
+          date: state.selectedDate,
+          startTime: state.selectedSlot.startTime,
+          ...photo
+        });
+
+        if (!result.ok) throw new Error(result.error || '予約確定に失敗しました');
+
+        statusEl.textContent = result.preview
+          ? 'プレビューでは送信せず、予約確定直前まで確認しました。'
+          : '予約を確定しました。画面を閉じてください。';
+
+        if (!result.preview && window.liff && liff.isInClient()) {
+          setTimeout(() => liff.closeWindow(), 1200);
+        }
+      } catch (error) {
+        setError(error.message || '予約確定に失敗しました。');
+      } finally {
+        submitButton.disabled = false;
+      }
+    }
+
+    form.addEventListener('change', (event) => {
+      if (event.target.name === 'menuIds') updateDuration();
+      if (event.target.name === 'name' || event.target.name === 'birth') updateSummary();
+    });
+
+    loadMonthsButton.addEventListener('click', loadMonths);
+    monthList.addEventListener('click', (event) => {
+      const button = event.target.closest('button[data-month]');
+      if (button) selectMonth(button.dataset.month, button);
+    });
+    dateList.addEventListener('click', (event) => {
+      const button = event.target.closest('button[data-date]');
+      if (button) selectDate(button.dataset.date, button);
+    });
+    acceptProposalButton.addEventListener('click', updateSummary);
+    showOtherTimesButton.addEventListener('click', () => timeList.classList.toggle('hidden'));
+    timeList.addEventListener('click', (event) => {
+      const button = event.target.closest('button[data-time]');
+      if (button) chooseSlot(button.dataset.time, button);
+    });
+    form.addEventListener('submit', submitReservation);
+
+    async function initialize() {
+      try {
+        appConfig = { ...appConfig, ...(await apiCall('getClientConfig')) };
+      } catch (error) {
+        console.warn('Server config unavailable', error);
+      }
+
+      document.querySelector('#title').textContent = appConfig.businessName;
+      renderMenus();
+      await setupLineProfile();
+
+      try {
+        const initialState = await apiCall('getInitialState', { lineUserId: state.lineUserId });
+        applyInitialState(initialState);
+      } catch (error) {
+        console.warn('Initial state unavailable', error);
+      }
+    }
+
+    initialize();
+  </script>
+</body>
+</html>
