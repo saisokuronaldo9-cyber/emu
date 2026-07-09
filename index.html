@@ -383,7 +383,7 @@
 
       <section>
         <h2>7. 予約確定</h2>
-        <details class="debug" open>
+        <details class="debug">
           <summary>LIFF診断</summary>
           <pre id="debugOutput">確認中...</pre>
         </details>
@@ -440,32 +440,40 @@
         return previewApi(name);
       }
 
+      if (name !== 'submitReservation') {
+        return jsonpApiCall(name, payload);
+      }
+
       try {
-        const response = await fetch(appConfig.gasApiUrl, {
+        const response = await fetchWithTimeout(appConfig.gasApiUrl, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'text/plain;charset=utf-8'
-          },
-          body: JSON.stringify({
-            action: name,
-            payload: payload || {}
-          })
-        });
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: name, payload: payload || {} })
+        }, 20000);
 
         if (!response.ok) throw new Error(`GAS API HTTP ${response.status}`);
         return await response.json();
       } catch (error) {
-        if (name !== 'submitReservation') {
-          return jsonpApiCall(name, payload);
-        }
         throw error;
       }
+    }
+
+    function fetchWithTimeout(url, options, timeoutMs) {
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+      return fetch(url, { ...options, signal: controller.signal })
+        .finally(() => window.clearTimeout(timer));
     }
 
     function jsonpApiCall(name, payload) {
       return new Promise((resolve, reject) => {
         const callbackName = `reservationApi_${Date.now()}_${Math.random().toString(36).slice(2)}`;
         const script = document.createElement('script');
+        const timer = window.setTimeout(() => {
+          delete window[callbackName];
+          script.remove();
+          reject(new Error('GAS APIの応答がありません。GASのコード貼り替えと再デプロイを確認してください。'));
+        }, 20000);
         const params = new URLSearchParams({
           action: name,
           payload: JSON.stringify(payload || {}),
@@ -473,12 +481,14 @@
         });
 
         window[callbackName] = (result) => {
+          window.clearTimeout(timer);
           delete window[callbackName];
           script.remove();
           resolve(result);
         };
 
         script.onerror = () => {
+          window.clearTimeout(timer);
           delete window[callbackName];
           script.remove();
           reject(new Error('GAS APIに接続できませんでした'));
@@ -516,6 +526,7 @@
     }
 
     async function setupLineProfile() {
+      const cleanUrl = `${location.origin}${location.pathname}${location.search}`;
       const debug = {
         liffId: appConfig.liffId,
         hasLiffSdk: Boolean(window.liff),
@@ -523,7 +534,7 @@
         isLoggedIn: null,
         userId: '',
         displayName: '',
-        url: location.href,
+        url: cleanUrl,
         referrer: document.referrer || '',
         userAgent: navigator.userAgent,
         phase: 'created',
@@ -713,7 +724,14 @@
       loadMonthsButton.disabled = true;
       monthList.innerHTML = '<div class="empty">予約可能月を確認しています...</div>';
 
-      const result = await apiCall('getReservableMonths', { duration, menuIds, customerType });
+      let result;
+      try {
+        result = await apiCall('getReservableMonths', { duration, menuIds, customerType });
+      } catch (error) {
+        monthList.innerHTML = `<div class="empty">予約可能月を取得できませんでした。GASを最新版で再デプロイしてください。<br>${error.message || error}</div>`;
+        loadMonthsButton.disabled = false;
+        return;
+      }
       loadMonthsButton.disabled = false;
 
       if (!result.ok || !result.months.length) {
@@ -734,13 +752,19 @@
       const [year, monthNumber] = month.split('-').map(Number);
       dateList.innerHTML = '<div class="empty">予約可能日を確認しています...</div>';
 
-      const result = await apiCall('getReservableDates', {
-        year,
-        month: monthNumber,
-        duration: getDuration(),
-        menuIds: getMenuIds(),
-        customerType: state.customerType
-      });
+      let result;
+      try {
+        result = await apiCall('getReservableDates', {
+          year,
+          month: monthNumber,
+          duration: getDuration(),
+          menuIds: getMenuIds(),
+          customerType: state.customerType
+        });
+      } catch (error) {
+        dateList.innerHTML = `<div class="empty">予約可能日を取得できませんでした。<br>${error.message || error}</div>`;
+        return;
+      }
 
       if (!result.ok || !result.dates.length) {
         dateList.innerHTML = '<div class="empty">この月に予約可能日はありません。</div>';
@@ -763,12 +787,18 @@
       acceptProposalButton.disabled = true;
       showOtherTimesButton.disabled = true;
 
-      const result = await apiCall('getFreeTimeProposal', {
-        date,
-        duration: getDuration(),
-        menuIds: getMenuIds(),
-        customerType: state.customerType
-      });
+      let result;
+      try {
+        result = await apiCall('getFreeTimeProposal', {
+          date,
+          duration: getDuration(),
+          menuIds: getMenuIds(),
+          customerType: state.customerType
+        });
+      } catch (error) {
+        timeProposal.textContent = `空き時間を取得できませんでした。${error.message || error}`;
+        return;
+      }
 
       if (!result.ok) {
         timeProposal.textContent = result.error || '空き時間がありません。別の日を選択してください。';
