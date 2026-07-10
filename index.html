@@ -352,26 +352,26 @@
         </label>
       </section>
 
-      <section>
+      <section id="menuSection">
         <h2>3. メニュー選択</h2>
         <div id="menuList" class="choices"></div>
         <div id="durationBox" class="summary">メニューを選ぶと施術時間を計算します。</div>
       </section>
 
-      <section>
+      <section id="monthSection">
         <h2>4. 予約可能月を選択</h2>
         <button id="loadMonthsButton" class="secondary" type="button">予約可能月を表示</button>
         <div id="monthList" class="button-grid"></div>
       </section>
 
-      <section>
+      <section id="dateSection">
         <h2>5. 予約可能日を選択</h2>
         <div id="dateList" class="date-grid">
           <div class="empty">予約可能月を選ぶと日付が表示されます。</div>
         </div>
       </section>
 
-      <section>
+      <section id="timeSection">
         <h2>6. 時間確認</h2>
         <div id="timeProposal" class="summary">日付を選ぶと、こちらから最初の候補時間を提示します。</div>
         <div class="button-grid">
@@ -381,7 +381,7 @@
         <div id="timeList" class="time-grid hidden"></div>
       </section>
 
-      <section>
+      <section id="confirmSection">
         <h2>7. 予約確定</h2>
         <details class="debug">
           <summary>LIFF診断</summary>
@@ -432,6 +432,7 @@
     const summary = document.querySelector('#summary');
     const statusEl = document.querySelector('#status');
     const submitButton = form.querySelector('button[type="submit"]');
+    const photoSection = document.querySelector('#photoSection');
     const photoInput = document.querySelector('#photoInput');
     const debugOutput = document.querySelector('#debugOutput');
 
@@ -614,6 +615,7 @@
 
     function applyInitialState(initialState) {
       state.customerType = initialState.customerType || (initialState.user ? 'リピーター' : '初回');
+      updatePhotoVisibility();
 
       if (!initialState.user) {
         knownUser.classList.add('hidden');
@@ -633,6 +635,27 @@
       form.elements.name.value = initialState.user.name;
       form.elements.birth.value = initialState.user.birth;
       updateDuration();
+    }
+
+    function updatePhotoVisibility() {
+      const isRepeater = state.customerType === 'リピーター';
+      photoSection.classList.toggle('hidden', isRepeater);
+      if (isRepeater) {
+        photoInput.value = '';
+      }
+
+      const offset = isRepeater ? -1 : 0;
+      const labels = [
+        ['#menuSection h2', 3, 'メニュー選択'],
+        ['#monthSection h2', 4, '予約可能月を選択'],
+        ['#dateSection h2', 5, '予約可能日を選択'],
+        ['#timeSection h2', 6, '時間確認'],
+        ['#confirmSection h2', 7, '予約確定']
+      ];
+
+      labels.forEach(([selector, baseNumber, title]) => {
+        document.querySelector(selector).textContent = `${baseNumber + offset}. ${title}`;
+      });
     }
 
     function getMenuIds() {
